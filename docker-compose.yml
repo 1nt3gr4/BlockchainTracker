@@ -15,6 +15,16 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: .
@@ -23,9 +33,12 @@ services:
       - "8080:8080"
     environment:
       - ConnectionStrings__PostgreSql=Host=postgres;Port=5432;Database=blockchain_tracker;Username=blockchain;Password=blockchain
+      - Redis__ConnectionString=redis:6379
       - BlockCypher__Token=${BLOCKCYPHER_TOKEN:-}
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
 volumes:

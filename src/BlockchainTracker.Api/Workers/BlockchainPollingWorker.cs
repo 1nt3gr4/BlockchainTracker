@@ -2,12 +2,15 @@ using BlockchainTracker.Application.Commands;
 using BlockchainTracker.Domain.Configuration;
 using Mediator;
 using Microsoft.Extensions.Options;
+using RedLockNet;
 
 namespace BlockchainTracker.Api.Workers;
 
 public class BlockchainPollingWorker(
     IServiceScopeFactory scopeFactory,
     IOptionsMonitor<PollingSettings> pollingSettings,
+    IOptionsMonitor<DistributedLockSettings> lockSettings,
+    IDistributedLockFactory lockFactory,
     ILogger<BlockchainPollingWorker> logger)
     : BackgroundService
 {
@@ -17,20 +20,32 @@ public class BlockchainPollingWorker(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            try
-            {
-                await using var scope = scopeFactory.CreateAsyncScope();
+            var currentLockSettings = lockSettings.CurrentValue;
 
-                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                await mediator.Send(new FetchAllChainsCommand(), stoppingToken);
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            await using var redLock = await lockFactory.CreateLockAsync(
+                currentLockSettings.PollingLockKey,
+                currentLockSettings.LockTtl);
+
+            if (redLock.IsAcquired)
             {
-                break;
+                try
+                {
+                    await using var scope = scopeFactory.CreateAsyncScope();
+                    var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+                    await mediator.Send(new FetchAllChainsCommand(), stoppingToken);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error during blockchain polling cycle");
+                }
             }
-            catch (Exception ex)
+            else
             {
-                logger.LogError(ex, "Error during blockchain polling cycle");
+                logger.LogDebug("Skipping polling cycle — another instance holds the lock");
             }
 
             try
