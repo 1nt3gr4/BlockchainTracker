@@ -1,0 +1,82 @@
+using System.Diagnostics;
+using System.Text.Json;
+using BlockchainTracker.Application;
+using BlockchainTracker.Application.Interfaces;
+using BlockchainTracker.Domain.Entities;
+using BlockchainTracker.Domain.Interfaces;
+using BlockchainTracker.Infrastructure.Telemetry;
+using Microsoft.Extensions.Logging;
+
+namespace BlockchainTracker.Infrastructure.Services;
+
+public sealed class BlockchainDataFetcherService(
+    IBlockchainApiClient apiClient,
+    IUnitOfWork unitOfWork,
+    ICacheService cache,
+    BlockchainTrackerMetrics metrics,
+    ILogger<BlockchainDataFetcherService> logger)
+    : IBlockchainDataFetcherService
+{
+    private static readonly JsonSerializerOptions SnakeCaseOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+    };
+
+    public async Task<bool> FetchAndSaveAsync(string chainName, CancellationToken ct)
+    {
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var response = await apiClient.GetChainDataAsync(chainName, ct);
+            metrics.RecordSnapshotFetched(chainName);
+
+            var exists = await unitOfWork.Repository.ExistsAsync(chainName, response.Height, response.Hash, ct);
+
+            if (exists)
+            {
+                metrics.RecordDuplicateSkipped(chainName);
+                return false;
+            }
+
+            var snapshot = new BlockchainSnapshot
+            {
+                ChainName = chainName,
+                Height = response.Height,
+                Hash = response.Hash,
+                Time = response.Time,
+                RawJson = JsonSerializer.Serialize(response, SnakeCaseOptions),
+                FetchedAt = DateTimeOffset.UtcNow
+            };
+
+            unitOfWork.Repository.Add(snapshot);
+            await unitOfWork.SaveChangesAsync(ct);
+            metrics.RecordSnapshotSaved(chainName);
+
+            await cache.RemoveAsync(CacheKeys.ChainLatest(chainName), ct);
+            await cache.RemoveAsync(CacheKeys.AllChainsLatest, ct);
+
+            // Invalidate history cache by incrementing the per-chain version
+            var versionKey = CacheKeys.ChainHistoryVersion(chainName);
+            var currentVersion = await cache.GetAsync<long>(versionKey, ct);
+            await cache.SetAsync(versionKey, currentVersion + 1, TimeSpan.FromDays(7), ct);
+
+            logger.LogDebug("Saved new snapshot for {ChainName} at height {Height}", chainName, response.Height);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            metrics.RecordFetchError(chainName);
+            throw;
+        }
+        finally
+        {
+            sw.Stop();
+            metrics.RecordFetchDuration(chainName, sw.Elapsed.TotalMilliseconds);
+        }
+    }
+}

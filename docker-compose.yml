@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: blockchain
+      POSTGRES_PASSWORD: blockchain
+      POSTGRES_DB: blockchain_tracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blockchain -d blockchain_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ConnectionStrings__PostgreSql=Host=postgres;Port=5432;Database=blockchain_tracker;Username=blockchain;Password=blockchain
+      - BlockCypher__Token=${BLOCKCYPHER_TOKEN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
