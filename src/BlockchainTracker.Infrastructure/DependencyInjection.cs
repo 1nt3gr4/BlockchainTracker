@@ -23,7 +23,8 @@ public static class DependencyInjection
         services.AddPooledDbContextFactory<BlockchainDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("PostgreSql")));
 
-        services.AddSingleton<IBlockchainSnapshotRepository, BlockchainSnapshotRepository>();
+        services.AddScoped<IBlockchainSnapshotRepository, BlockchainSnapshotRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddSingleton<BlockchainTrackerMetrics>();
 

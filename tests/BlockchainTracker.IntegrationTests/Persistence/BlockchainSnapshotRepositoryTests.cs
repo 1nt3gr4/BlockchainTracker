@@ -7,16 +7,19 @@ namespace BlockchainTracker.IntegrationTests.Persistence;
 public class BlockchainSnapshotRepositoryTests : IAsyncLifetime
 {
     private readonly PostgresFixture _fixture = new();
+    private BlockchainDbContext _repoContext = null!;
     private BlockchainSnapshotRepository _repository = null!;
 
     public async ValueTask InitializeAsync()
     {
         await _fixture.InitializeAsync();
-        _repository = new BlockchainSnapshotRepository(_fixture.CreateDbContextFactory());
+        _repoContext = _fixture.CreateContext();
+        _repository = new BlockchainSnapshotRepository(_repoContext);
     }
 
     public async ValueTask DisposeAsync()
     {
+        await _repoContext.DisposeAsync();
         await _fixture.DisposeAsync();
     }
 

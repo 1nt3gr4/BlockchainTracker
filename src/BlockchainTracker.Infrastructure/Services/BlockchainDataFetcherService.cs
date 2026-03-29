@@ -3,16 +3,15 @@ using System.Text.Json;
 using BlockchainTracker.Application.Interfaces;
 using BlockchainTracker.Domain.Entities;
 using BlockchainTracker.Domain.Interfaces;
-using BlockchainTracker.Infrastructure.Persistence;
 using BlockchainTracker.Infrastructure.Telemetry;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BlockchainTracker.Infrastructure.Services;
 
 public class BlockchainDataFetcherService(
     IBlockchainApiClient apiClient,
-    IDbContextFactory<BlockchainDbContext> contextFactory,
+    IServiceScopeFactory scopeFactory,
     ICacheService cache,
     BlockchainTrackerMetrics metrics,
     ILogger<BlockchainDataFetcherService> logger) : IBlockchainDataFetcherService
@@ -30,11 +29,10 @@ public class BlockchainDataFetcherService(
             var response = await apiClient.GetChainDataAsync(chainName, ct);
             metrics.RecordSnapshotFetched(chainName);
 
-            await using var context = await contextFactory.CreateDbContextAsync(ct);
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            var exists = await context.Snapshots
-                .AnyAsync(s => s.ChainName == chainName && s.Height == response.Height && s.Hash == response.Hash, ct);
-
+            var exists = await unitOfWork.Repository.ExistsAsync(chainName, response.Height, response.Hash, ct);
             if (exists)
             {
                 metrics.RecordDuplicateSkipped(chainName);
@@ -51,8 +49,8 @@ public class BlockchainDataFetcherService(
                 FetchedAt = DateTimeOffset.UtcNow
             };
 
-            await context.Snapshots.AddAsync(snapshot, ct);
-            await context.SaveChangesAsync(ct);
+            await unitOfWork.Repository.AddAsync(snapshot, ct);
+            await unitOfWork.SaveChangesAsync(ct);
             metrics.RecordSnapshotSaved(chainName);
 
             await cache.RemoveAsync($"chain:latest:{chainName}", ct);

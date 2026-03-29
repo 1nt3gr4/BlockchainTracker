@@ -10,7 +10,7 @@ namespace BlockchainTracker.Api.HealthChecks;
 /// Results are cached for 1 minute to minimize database load.
 /// </summary>
 public class BlockchainDataHealthCheck(
-    IBlockchainSnapshotRepository repository,
+    IServiceScopeFactory scopeFactory,
     IOptions<HealthCheckSettings> settings) : IHealthCheck
 {
     private HealthCheckResult? _cachedResult;
@@ -30,6 +30,8 @@ public class BlockchainDataHealthCheck(
 
     private async Task<HealthCheckResult> EvaluateHealthAsync(CancellationToken ct)
     {
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var repository = scope.ServiceProvider.GetRequiredService<IBlockchainSnapshotRepository>();
         var snapshots = await repository.GetLatestPerChainAsync(ct);
 
         if (snapshots.Count == 0)
