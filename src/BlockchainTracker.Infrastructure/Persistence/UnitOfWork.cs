@@ -6,5 +6,5 @@ public class UnitOfWork(BlockchainDbContext context, IBlockchainSnapshotReposito
 {
     public IBlockchainSnapshotRepository Repository => repository;
 
-    public Task<int> SaveChangesAsync(CancellationToken ct = default) => context.SaveChangesAsync(ct);
+    public Task<int> SaveChangesAsync(CancellationToken ct) => context.SaveChangesAsync(ct);
 }

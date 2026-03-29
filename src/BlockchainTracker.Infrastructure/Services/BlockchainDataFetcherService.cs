@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using BlockchainTracker.Application;
 using BlockchainTracker.Application.Interfaces;
 using BlockchainTracker.Domain.Entities;
 using BlockchainTracker.Domain.Interfaces;
@@ -13,22 +14,25 @@ public class BlockchainDataFetcherService(
     IUnitOfWork unitOfWork,
     ICacheService cache,
     BlockchainTrackerMetrics metrics,
-    ILogger<BlockchainDataFetcherService> logger) : IBlockchainDataFetcherService
+    ILogger<BlockchainDataFetcherService> logger)
+    : IBlockchainDataFetcherService
 {
     private static readonly JsonSerializerOptions SnakeCaseOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
     };
 
-    public async Task<bool> FetchAndSaveAsync(string chainName, CancellationToken ct = default)
+    public async Task<bool> FetchAndSaveAsync(string chainName, CancellationToken ct)
     {
         var sw = Stopwatch.StartNew();
+
         try
         {
             var response = await apiClient.GetChainDataAsync(chainName, ct);
             metrics.RecordSnapshotFetched(chainName);
 
             var exists = await unitOfWork.Repository.ExistsAsync(chainName, response.Height, response.Hash, ct);
+
             if (exists)
             {
                 metrics.RecordDuplicateSkipped(chainName);
@@ -49,8 +53,8 @@ public class BlockchainDataFetcherService(
             await unitOfWork.SaveChangesAsync(ct);
             metrics.RecordSnapshotSaved(chainName);
 
-            await cache.RemoveAsync($"chain:latest:{chainName}", ct);
-            await cache.RemoveAsync("chains:latest:all", ct);
+            await cache.RemoveAsync(CacheKeys.ChainLatest(chainName), ct);
+            await cache.RemoveAsync(CacheKeys.AllChainsLatest, ct);
 
             logger.LogDebug("Saved new snapshot for {ChainName} at height {Height}", chainName, response.Height);
             return true;

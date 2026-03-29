@@ -1,3 +1,4 @@
+using BlockchainTracker.Domain.Helpers;
 using BlockchainTracker.Infrastructure.Clients;
 using BlockchainTracker.Domain.Models;
 using Microsoft.Extensions.Configuration;
@@ -31,7 +32,7 @@ public class BlockCypherApiClientTests
         _refitApi.GetChainDataAsync(expectedCoin, expectedChain, "test-token", Arg.Any<CancellationToken>())
             .Returns(response);
 
-        var result = await _client.GetChainDataAsync(chainName);
+        var result = await _client.GetChainDataAsync(chainName, CancellationToken.None);
 
         Assert.Equal(response, result);
         await _refitApi.Received(1).GetChainDataAsync(expectedCoin, expectedChain, "test-token", Arg.Any<CancellationToken>());
@@ -40,13 +41,13 @@ public class BlockCypherApiClientTests
     [Fact]
     public async Task GetChainDataAsync_UnsupportedChain_ThrowsArgumentException()
     {
-        await Assert.ThrowsAsync<ArgumentException>(() => _client.GetChainDataAsync("unsupported-chain"));
+        await Assert.ThrowsAsync<ArgumentException>(() => _client.GetChainDataAsync("unsupported-chain", CancellationToken.None));
     }
 
     [Fact]
     public void GetSupportedChains_ReturnsFiveChains()
     {
-        var chains = _client.GetSupportedChains();
+        var chains = BlockchainChainHelper.GetSupportedChains();
 
         Assert.Equal(5, chains.Count);
         Assert.Contains("eth-main", chains);
@@ -66,7 +67,7 @@ public class BlockCypherApiClientTests
         var response = new BlockchainApiResponse { Name = "btc-main", Height = 100, Hash = "abc" };
         _refitApi.GetChainDataAsync("btc", "main", null, Arg.Any<CancellationToken>()).Returns(response);
 
-        await client.GetChainDataAsync("btc-main");
+        await client.GetChainDataAsync("btc-main", CancellationToken.None);
 
         await _refitApi.Received(1).GetChainDataAsync("btc", "main", null, Arg.Any<CancellationToken>());
     }

@@ -8,7 +8,8 @@ namespace BlockchainTracker.Api.Workers;
 public class BlockchainPollingWorker(
     IServiceScopeFactory scopeFactory,
     IOptionsMonitor<PollingSettings> pollingSettings,
-    ILogger<BlockchainPollingWorker> logger) : BackgroundService
+    ILogger<BlockchainPollingWorker> logger)
+    : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -19,6 +20,7 @@ public class BlockchainPollingWorker(
             try
             {
                 await using var scope = scopeFactory.CreateAsyncScope();
+
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
                 await mediator.Send(new FetchAllChainsCommand(), stoppingToken);
             }

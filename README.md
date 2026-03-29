@@ -50,7 +50,7 @@ dotnet test BlockchainTracker.sln
 ### With Docker Compose
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 This starts PostgreSQL and the API. The API is available at `http://localhost:8080`.
@@ -59,7 +59,7 @@ This starts PostgreSQL and the API. The API is available at `http://localhost:80
 
 1. Start PostgreSQL (e.g., via Docker Compose or a local install):
    ```bash
-   docker-compose up -d postgres
+   docker compose up -d postgres
    ```
 
 2. Run the API:

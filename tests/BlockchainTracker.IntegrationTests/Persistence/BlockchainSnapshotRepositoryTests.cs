@@ -29,7 +29,7 @@ public class BlockchainSnapshotRepositoryTests : IAsyncLifetime
         await SeedSnapshot(CreateSnapshot("eth-main", 100));
         await SeedSnapshot(CreateSnapshot("eth-main", 200));
 
-        var result = await _repository.GetLatestByChainAsync("eth-main");
+        var result = await _repository.GetLatestByChainAsync("eth-main", CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.Equal(200, result.Height);
@@ -42,7 +42,7 @@ public class BlockchainSnapshotRepositoryTests : IAsyncLifetime
         await SeedSnapshot(CreateSnapshot("btc-main", 200));
         await SeedSnapshot(CreateSnapshot("eth-main", 500));
 
-        var results = await _repository.GetLatestPerChainAsync();
+        var results = await _repository.GetLatestPerChainAsync(CancellationToken.None);
 
         Assert.Equal(2, results.Count);
     }
@@ -53,7 +53,7 @@ public class BlockchainSnapshotRepositoryTests : IAsyncLifetime
         for (var i = 0; i < 25; i++)
             await SeedSnapshot(CreateSnapshot("ltc-main", 1000 + i));
 
-        var (items, totalCount) = await _repository.GetHistoryAsync("ltc-main", 1, 10);
+        var (items, totalCount) = await _repository.GetHistoryAsync("ltc-main", 1, 10, CancellationToken.None);
 
         Assert.Equal(10, items.Count);
         Assert.Equal(25, totalCount);
@@ -62,7 +62,7 @@ public class BlockchainSnapshotRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetLatestByChainAsync_ReturnsNullForNonExisting()
     {
-        var result = await _repository.GetLatestByChainAsync("nonexistent");
+        var result = await _repository.GetLatestByChainAsync("nonexistent", CancellationToken.None);
 
         Assert.Null(result);
     }

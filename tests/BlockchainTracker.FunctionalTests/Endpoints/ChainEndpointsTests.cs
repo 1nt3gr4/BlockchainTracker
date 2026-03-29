@@ -32,9 +32,6 @@ public class ChainEndpointsTests : IAsyncLifetime, IClassFixture<CustomWebApplic
     [Fact]
     public async Task GetTrackedChains_ReturnsListOfChains()
     {
-        _factory.MockApiClient.GetSupportedChains()
-            .Returns(new List<string> { "btc-main", "eth-main", "ltc-main", "dash-main", "btc-test3" });
-
         var response = await _client.GetAsync("/api/chains/tracked");
 
         response.EnsureSuccessStatusCode();

@@ -9,6 +9,6 @@ public interface IBlockCypherApi
     Task<BlockchainApiResponse> GetChainDataAsync(
         string coin,
         string chain,
-        [AliasAs("token")] string? token = null,
-        CancellationToken ct = default);
+        [AliasAs("token")] string? token,
+        CancellationToken ct);
 }

@@ -38,6 +38,7 @@ public static class ChainEndpoints
         IMediator mediator, BlockchainTrackerMetrics metrics, CancellationToken ct)
     {
         metrics.RecordApiRequest("GetAllChainsLatest");
+
         var result = await mediator.Send(new GetAllChainsLatestQuery(), ct);
         return TypedResults.Ok(result);
     }
@@ -46,6 +47,7 @@ public static class ChainEndpoints
         IMediator mediator, BlockchainTrackerMetrics metrics, CancellationToken ct)
     {
         metrics.RecordApiRequest("GetTrackedChains");
+
         var result = await mediator.Send(new GetTrackedChainsQuery(), ct);
         return TypedResults.Ok(result);
     }
@@ -54,6 +56,7 @@ public static class ChainEndpoints
         string chainName, IMediator mediator, BlockchainTrackerMetrics metrics, CancellationToken ct)
     {
         metrics.RecordApiRequest("GetChainLatest");
+
         var result = await mediator.Send(new GetChainLatestQuery(chainName), ct);
         return result is not null
             ? TypedResults.Ok(result)
@@ -64,8 +67,10 @@ public static class ChainEndpoints
         string chainName, int page, int pageSize, IMediator mediator, BlockchainTrackerMetrics metrics, CancellationToken ct)
     {
         metrics.RecordApiRequest("GetChainHistory");
+
         var clampedPage = Math.Max(1, page);
         var clampedSize = Math.Clamp(pageSize, 1, 100);
+
         var result = await mediator.Send(new GetChainHistoryQuery(chainName, clampedPage, clampedSize), ct);
         return TypedResults.Ok(result);
     }

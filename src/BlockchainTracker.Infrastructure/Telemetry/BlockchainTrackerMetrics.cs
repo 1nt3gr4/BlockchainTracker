@@ -4,7 +4,7 @@ namespace BlockchainTracker.Infrastructure.Telemetry;
 
 public sealed class BlockchainTrackerMetrics
 {
-    public const string MeterName = "BlockchainTracker";
+    private const string MeterName = "BlockchainTracker";
 
     private readonly Counter<long> _snapshotsFetched;
     private readonly Counter<long> _snapshotsSaved;
@@ -35,7 +35,10 @@ public sealed class BlockchainTrackerMetrics
     public void RecordSnapshotSaved(string chainName) => _snapshotsSaved.Add(1, new KeyValuePair<string, object?>("chain", chainName));
     public void RecordFetchError(string chainName) => _fetchErrors.Add(1, new KeyValuePair<string, object?>("chain", chainName));
     public void RecordDuplicateSkipped(string chainName) => _duplicatesSkipped.Add(1, new KeyValuePair<string, object?>("chain", chainName));
-    public void RecordFetchDuration(string chainName, double durationMs) => _fetchDuration.Record(durationMs, new KeyValuePair<string, object?>("chain", chainName));
+
+    public void RecordFetchDuration(string chainName, double durationMs) =>
+        _fetchDuration.Record(durationMs, new KeyValuePair<string, object?>("chain", chainName));
+
     public void RecordCacheHit(string key) => _cacheHits.Add(1, new KeyValuePair<string, object?>("key", key));
     public void RecordCacheMiss(string key) => _cacheMisses.Add(1, new KeyValuePair<string, object?>("key", key));
     public void RecordApiRequest(string endpoint) => _apiRequests.Add(1, new KeyValuePair<string, object?>("endpoint", endpoint));

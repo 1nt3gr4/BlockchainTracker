@@ -6,7 +6,7 @@ namespace BlockchainTracker.Infrastructure.Persistence;
 
 public class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockchainSnapshotRepository
 {
-    public async Task<BlockchainSnapshot?> GetLatestByChainAsync(string chainName, CancellationToken ct = default)
+    public async Task<BlockchainSnapshot?> GetLatestByChainAsync(string chainName, CancellationToken ct)
     {
         return await context.Snapshots
             .AsNoTracking()
@@ -15,7 +15,7 @@ public class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockc
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<List<BlockchainSnapshot>> GetLatestPerChainAsync(CancellationToken ct = default)
+    public async Task<List<BlockchainSnapshot>> GetLatestPerChainAsync(CancellationToken ct)
     {
         return await context.Snapshots
             .AsNoTracking()
@@ -25,7 +25,10 @@ public class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockc
     }
 
     public async Task<(List<BlockchainSnapshot> Items, int TotalCount)> GetHistoryAsync(
-        string chainName, int page, int pageSize, CancellationToken ct = default)
+        string chainName,
+        int page,
+        int pageSize,
+        CancellationToken ct)
     {
         var query = context.Snapshots
             .AsNoTracking()
@@ -41,13 +44,13 @@ public class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockc
         return (items, totalCount);
     }
 
-    public async Task<bool> ExistsAsync(string chainName, long height, string hash, CancellationToken ct = default)
+    public async Task<bool> ExistsAsync(string chainName, long height, string hash, CancellationToken ct)
     {
         return await context.Snapshots
             .AnyAsync(s => s.ChainName == chainName && s.Height == height && s.Hash == hash, ct);
     }
 
-    public async Task AddAsync(BlockchainSnapshot snapshot, CancellationToken ct = default)
+    public async Task AddAsync(BlockchainSnapshot snapshot, CancellationToken ct)
     {
         await context.Snapshots.AddAsync(snapshot, ct);
     }

@@ -29,8 +29,8 @@ public class UnitOfWorkTests : IAsyncLifetime
             FetchedAt = DateTimeOffset.UtcNow
         };
 
-        await unitOfWork.Repository.AddAsync(snapshot);
-        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.Repository.AddAsync(snapshot, CancellationToken.None);
+        await unitOfWork.SaveChangesAsync(CancellationToken.None);
 
         await using var verifyContext = _fixture.CreateContext();
         var persisted = await verifyContext.Snapshots
@@ -60,7 +60,7 @@ public class UnitOfWorkTests : IAsyncLifetime
         var repository = new BlockchainSnapshotRepository(context);
         var unitOfWork = new UnitOfWork(context, repository);
 
-        var exists = await unitOfWork.Repository.ExistsAsync("eth-main", 18000000, "exists-test-hash");
+        var exists = await unitOfWork.Repository.ExistsAsync("eth-main", 18000000, "exists-test-hash", CancellationToken.None);
 
         Assert.True(exists);
     }
@@ -72,7 +72,7 @@ public class UnitOfWorkTests : IAsyncLifetime
         var repository = new BlockchainSnapshotRepository(context);
         var unitOfWork = new UnitOfWork(context, repository);
 
-        var exists = await unitOfWork.Repository.ExistsAsync("nonexistent", 0, "no-hash");
+        var exists = await unitOfWork.Repository.ExistsAsync("nonexistent", 0, "no-hash", CancellationToken.None);
 
         Assert.False(exists);
     }

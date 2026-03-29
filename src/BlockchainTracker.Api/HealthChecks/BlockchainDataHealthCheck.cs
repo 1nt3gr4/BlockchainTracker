@@ -11,20 +11,25 @@ namespace BlockchainTracker.Api.HealthChecks;
 /// </summary>
 public class BlockchainDataHealthCheck(
     IServiceScopeFactory scopeFactory,
-    IOptions<HealthCheckSettings> settings) : IHealthCheck
+    IOptions<HealthCheckSettings> settings)
+    : IHealthCheck
 {
     private HealthCheckResult? _cachedResult;
     private DateTimeOffset _lastCheck = DateTimeOffset.MinValue;
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(1);
 
-    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken ct = default)
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken ct)
     {
         if (_cachedResult.HasValue && DateTimeOffset.UtcNow - _lastCheck < CacheDuration)
+        {
             return _cachedResult.Value;
+        }
 
         var result = await EvaluateHealthAsync(ct);
+
         _cachedResult = result;
         _lastCheck = DateTimeOffset.UtcNow;
+
         return result;
     }
 
@@ -35,7 +40,9 @@ public class BlockchainDataHealthCheck(
         var snapshots = await repository.GetLatestPerChainAsync(ct);
 
         if (snapshots.Count == 0)
-            return HealthCheckResult.Healthy("No blockchain data yet \u2014 polling may not have completed its first cycle");
+        {
+            return HealthCheckResult.Healthy("No blockchain data yet; polling may not have completed its first cycle");
+        }
 
         var staleThreshold = DateTimeOffset.UtcNow - settings.Value.MaxStaleAge;
         var staleChains = snapshots
@@ -43,9 +50,8 @@ public class BlockchainDataHealthCheck(
             .Select(s => s.ChainName)
             .ToList();
 
-        if (staleChains.Count > 0)
-            return HealthCheckResult.Degraded($"Stale data for chains: {string.Join(", ", staleChains)}");
-
-        return HealthCheckResult.Healthy($"All {snapshots.Count} chains have fresh data");
+        return staleChains.Count > 0
+            ? HealthCheckResult.Degraded($"Stale data for chains: {string.Join(", ", staleChains)}")
+            : HealthCheckResult.Healthy($"All {snapshots.Count} chains have fresh data");
     }
 }
