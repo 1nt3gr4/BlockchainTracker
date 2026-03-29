@@ -1,7 +1,7 @@
+using BlockchainTracker.Application.Interfaces;
 using BlockchainTracker.Domain.Configuration;
 using BlockchainTracker.Domain.Interfaces;
 using Mediator;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -11,7 +11,7 @@ public record FetchAllChainsCommand : ICommand;
 
 public sealed class FetchAllChainsCommandHandler(
     IBlockchainApiClient apiClient,
-    IServiceScopeFactory scopeFactory,
+    IBlockchainDataFetcherService fetcherService,
     IOptions<PollingSettings> pollingSettings,
     ILogger<FetchAllChainsCommandHandler> logger) : ICommandHandler<FetchAllChainsCommand>
 {
@@ -28,10 +28,11 @@ public sealed class FetchAllChainsCommandHandler(
         {
             try
             {
-                await using var scope = scopeFactory.CreateAsyncScope();
-                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                await mediator.Send(new FetchChainDataCommand(chainName), token);
-                logger.LogInformation("Fetched data for chain {ChainName}", chainName);
+                var saved = await fetcherService.FetchAndSaveAsync(chainName, token);
+                if (saved)
+                    logger.LogInformation("Saved new snapshot for chain {ChainName}", chainName);
+                else
+                    logger.LogDebug("No new data for chain {ChainName}", chainName);
             }
             catch (Exception ex)
             {

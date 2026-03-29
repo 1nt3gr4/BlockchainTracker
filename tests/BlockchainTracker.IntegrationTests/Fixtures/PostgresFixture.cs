@@ -32,4 +32,20 @@ public class PostgresFixture : IAsyncLifetime
 
         return new BlockchainDbContext(options);
     }
+
+    public IDbContextFactory<BlockchainDbContext> CreateDbContextFactory()
+    {
+        return new SimpleDbContextFactory(ConnectionString);
+    }
+
+    private sealed class SimpleDbContextFactory(string connectionString) : IDbContextFactory<BlockchainDbContext>
+    {
+        public BlockchainDbContext CreateDbContext()
+        {
+            var options = new DbContextOptionsBuilder<BlockchainDbContext>()
+                .UseNpgsql(connectionString)
+                .Options;
+            return new BlockchainDbContext(options);
+        }
+    }
 }

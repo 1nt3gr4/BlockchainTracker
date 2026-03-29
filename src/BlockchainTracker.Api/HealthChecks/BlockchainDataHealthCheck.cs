@@ -7,12 +7,10 @@ namespace BlockchainTracker.Api.HealthChecks;
 
 /// <summary>
 /// Monitors that blockchain polling is functioning correctly by checking data freshness.
-/// Reports degraded status when polling has stopped or data becomes stale,
-/// helping container orchestrators (Kubernetes, Docker) detect service issues.
 /// Results are cached for 1 minute to minimize database load.
 /// </summary>
 public class BlockchainDataHealthCheck(
-    IServiceScopeFactory scopeFactory,
+    IBlockchainSnapshotRepository repository,
     IOptions<HealthCheckSettings> settings) : IHealthCheck
 {
     private HealthCheckResult? _cachedResult;
@@ -32,8 +30,6 @@ public class BlockchainDataHealthCheck(
 
     private async Task<HealthCheckResult> EvaluateHealthAsync(CancellationToken ct)
     {
-        await using var scope = scopeFactory.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IBlockchainSnapshotRepository>();
         var snapshots = await repository.GetLatestPerChainAsync(ct);
 
         if (snapshots.Count == 0)

@@ -25,7 +25,6 @@ public class DatabaseMigrationTests : IAsyncLifetime
     {
         await using var context = _fixture.CreateContext();
 
-        // Verify the snapshots table exists by querying it
         var count = await context.Snapshots.CountAsync();
         Assert.Equal(0, count);
     }
@@ -70,8 +69,7 @@ public class DatabaseMigrationTests : IAsyncLifetime
     {
         await using var context = _fixture.CreateContext();
 
-        // Calling EnsureCreated again should not throw
         var result = await context.Database.EnsureCreatedAsync();
-        Assert.False(result); // Returns false when DB already exists
+        Assert.False(result);
     }
 }

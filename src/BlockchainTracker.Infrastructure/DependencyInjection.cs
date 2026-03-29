@@ -1,9 +1,11 @@
 using System.Net;
+using System.Text.Json;
 using BlockchainTracker.Application.Interfaces;
 using BlockchainTracker.Domain.Interfaces;
 using BlockchainTracker.Infrastructure.Caching;
 using BlockchainTracker.Infrastructure.Clients;
 using BlockchainTracker.Infrastructure.Persistence;
+using BlockchainTracker.Infrastructure.Services;
 using BlockchainTracker.Infrastructure.Telemetry;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -21,28 +23,38 @@ public static class DependencyInjection
         services.AddPooledDbContextFactory<BlockchainDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("PostgreSql")));
 
-        services.AddTransient<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<IBlockchainSnapshotRepository>(sp =>
-        {
-            var factory = sp.GetRequiredService<IDbContextFactory<BlockchainDbContext>>();
-            var context = factory.CreateDbContext();
-            return new BlockchainSnapshotRepository(context);
-        });
+        services.AddSingleton<IBlockchainSnapshotRepository, BlockchainSnapshotRepository>();
+
+        services.AddSingleton<BlockchainTrackerMetrics>();
 
         var baseUrl = configuration["BlockCypher:BaseUrl"] ?? "https://api.blockcypher.com";
 
-        services.AddRefitClient<IBlockCypherApi>()
+        var refitSettings = new RefitSettings
+        {
+            ContentSerializer = new SystemTextJsonContentSerializer(new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+            })
+        };
+
+        IAsyncPolicy<HttpResponseMessage>? circuitBreakerPolicy = null;
+
+        services.AddRefitClient<IBlockCypherApi>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = new Uri(baseUrl))
             .AddPolicyHandler(GetRateLimitPolicy())
             .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler(GetCircuitBreakerPolicy());
+            .AddPolicyHandler((sp, _) =>
+            {
+                return circuitBreakerPolicy ??= GetCircuitBreakerPolicy(
+                    sp.GetRequiredService<BlockchainTrackerMetrics>());
+            });
 
         services.AddSingleton<IBlockchainApiClient, BlockCypherApiClient>();
 
         services.AddMemoryCache();
         services.AddSingleton<ICacheService, MemoryCacheService>();
 
-        services.AddSingleton<BlockchainTrackerMetrics>();
+        services.AddSingleton<IBlockchainDataFetcherService, BlockchainDataFetcherService>();
 
         return services;
     }
@@ -71,10 +83,12 @@ public static class DependencyInjection
                 TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
     }
 
-    private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
+    private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy(BlockchainTrackerMetrics metrics)
     {
         return HttpPolicyExtensions
             .HandleTransientHttpError()
-            .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
+            .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30),
+                onBreak: (_, _) => metrics.RecordCircuitBreakerTrip("blockcypher"),
+                onReset: () => { });
     }
 }

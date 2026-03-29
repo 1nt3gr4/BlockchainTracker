@@ -106,8 +106,6 @@ public class ChainEndpointsTests : IAsyncLifetime, IClassFixture<CustomWebApplic
             Height = height,
             Hash = $"seed-{chain}-{height}-{++_seedCounter}",
             Time = DateTimeOffset.UtcNow,
-            PeerCount = 100,
-            UnconfirmedCount = 500,
             RawJson = "{}",
             FetchedAt = DateTimeOffset.UtcNow
         });

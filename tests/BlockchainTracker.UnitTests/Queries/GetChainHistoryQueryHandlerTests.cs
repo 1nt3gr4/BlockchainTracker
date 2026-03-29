@@ -70,9 +70,6 @@ public class GetChainHistoryQueryHandlerTests
         Height = height,
         Hash = $"hash-{height}",
         Time = DateTimeOffset.UtcNow,
-        PeerCount = 250,
-        UnconfirmedCount = 1500,
-        LastForkHeight = height - 10,
         RawJson = "{}",
         FetchedAt = DateTimeOffset.UtcNow
     };

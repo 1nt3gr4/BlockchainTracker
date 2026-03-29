@@ -8,6 +8,5 @@ namespace BlockchainTracker.Application.Mapping;
 public static partial class BlockchainSnapshotMapper
 {
     [MapperIgnoreSource(nameof(BlockchainSnapshot.Id))]
-    [MapperIgnoreSource(nameof(BlockchainSnapshot.RawJson))]
     public static partial BlockchainSnapshotDto MapToDto(BlockchainSnapshot snapshot);
 }

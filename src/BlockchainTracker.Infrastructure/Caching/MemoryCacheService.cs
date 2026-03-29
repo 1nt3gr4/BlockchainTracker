@@ -1,14 +1,21 @@
 using BlockchainTracker.Application.Interfaces;
+using BlockchainTracker.Infrastructure.Telemetry;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace BlockchainTracker.Infrastructure.Caching;
 
-public class MemoryCacheService(IMemoryCache cache) : ICacheService
+public class MemoryCacheService(IMemoryCache cache, BlockchainTrackerMetrics metrics) : ICacheService
 {
     public Task<T?> GetAsync<T>(string key, CancellationToken ct = default)
     {
-        cache.TryGetValue(key, out T? value);
-        return Task.FromResult(value);
+        if (cache.TryGetValue(key, out T? value))
+        {
+            metrics.RecordCacheHit(key);
+            return Task.FromResult<T?>(value);
+        }
+
+        metrics.RecordCacheMiss(key);
+        return Task.FromResult<T?>(default);
     }
 
     public Task SetAsync<T>(string key, T value, TimeSpan ttl, CancellationToken ct = default)

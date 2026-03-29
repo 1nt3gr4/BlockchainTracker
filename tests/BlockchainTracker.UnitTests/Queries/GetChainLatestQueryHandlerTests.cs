@@ -24,7 +24,7 @@ public class GetChainLatestQueryHandlerTests
     [Fact]
     public async Task Handle_CacheHit_ReturnsCachedValue()
     {
-        var cached = new BlockchainSnapshotDto { ChainName = "btc-main", Hash = "abc", Height = 100, FetchedAt = DateTimeOffset.UtcNow };
+        var cached = new BlockchainSnapshotDto { ChainName = "btc-main", Hash = "abc", Height = 100, RawJson = "{}", FetchedAt = DateTimeOffset.UtcNow };
         _cache.GetAsync<BlockchainSnapshotDto>("chain:latest:btc-main", Arg.Any<CancellationToken>()).Returns(cached);
 
         var result = await _handler.Handle(new GetChainLatestQuery("btc-main"), CancellationToken.None);
@@ -73,12 +73,6 @@ public class GetChainLatestQueryHandlerTests
         Height = 800000,
         Hash = "0000000000abc",
         Time = DateTimeOffset.UtcNow,
-        PeerCount = 250,
-        UnconfirmedCount = 1500,
-        HighFeePerKb = 50000,
-        MediumFeePerKb = 25000,
-        LowFeePerKb = 10000,
-        LastForkHeight = 799990,
         RawJson = "{}",
         FetchedAt = DateTimeOffset.UtcNow
     };

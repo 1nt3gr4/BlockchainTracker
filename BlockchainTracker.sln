@@ -15,6 +15,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockchainTracker.Api", "sr
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{F566B5F7-C6C9-4AA6-BDCB-2730C04B8B09}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		Dockerfile = Dockerfile
+		docker-compose.yml = docker-compose.yml
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		global.json = global.json
+		nuget.config = nuget.config
+		README.md = README.md
+	EndProjectSection
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockchainTracker.UnitTests", "tests\BlockchainTracker.UnitTests\BlockchainTracker.UnitTests.csproj", "{69DFE143-2F60-4CFF-BC24-C5CED21F5701}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockchainTracker.IntegrationTests", "tests\BlockchainTracker.IntegrationTests\BlockchainTracker.IntegrationTests.csproj", "{871BB14F-BCED-4EA2-8F13-E6FD64D4BEC7}"

@@ -8,40 +8,23 @@ public class BlockchainSnapshotRepositoryTests : IAsyncLifetime
 {
     private readonly PostgresFixture _fixture = new();
     private BlockchainSnapshotRepository _repository = null!;
-    private BlockchainDbContext _context = null!;
 
     public async ValueTask InitializeAsync()
     {
         await _fixture.InitializeAsync();
-        _context = _fixture.CreateContext();
-        _repository = new BlockchainSnapshotRepository(_context);
+        _repository = new BlockchainSnapshotRepository(_fixture.CreateDbContextFactory());
     }
 
     public async ValueTask DisposeAsync()
     {
-        await _context.DisposeAsync();
         await _fixture.DisposeAsync();
-    }
-
-    [Fact]
-    public async Task AddAsync_PersistsSnapshot()
-    {
-        var snapshot = CreateSnapshot("btc-main", 800000);
-
-        await _repository.AddAsync(snapshot);
-        await _context.SaveChangesAsync();
-
-        var result = await _repository.GetLatestByChainAsync("btc-main");
-        Assert.NotNull(result);
-        Assert.Equal(800000, result.Height);
     }
 
     [Fact]
     public async Task GetLatestByChainAsync_ReturnsLatest()
     {
-        await _repository.AddAsync(CreateSnapshot("eth-main", 100));
-        await _repository.AddAsync(CreateSnapshot("eth-main", 200));
-        await _context.SaveChangesAsync();
+        await SeedSnapshot(CreateSnapshot("eth-main", 100));
+        await SeedSnapshot(CreateSnapshot("eth-main", 200));
 
         var result = await _repository.GetLatestByChainAsync("eth-main");
 
@@ -52,10 +35,9 @@ public class BlockchainSnapshotRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetLatestPerChainAsync_ReturnsOnePerChain()
     {
-        await _repository.AddAsync(CreateSnapshot("btc-main", 100));
-        await _repository.AddAsync(CreateSnapshot("btc-main", 200));
-        await _repository.AddAsync(CreateSnapshot("eth-main", 500));
-        await _context.SaveChangesAsync();
+        await SeedSnapshot(CreateSnapshot("btc-main", 100));
+        await SeedSnapshot(CreateSnapshot("btc-main", 200));
+        await SeedSnapshot(CreateSnapshot("eth-main", 500));
 
         var results = await _repository.GetLatestPerChainAsync();
 
@@ -66,8 +48,7 @@ public class BlockchainSnapshotRepositoryTests : IAsyncLifetime
     public async Task GetHistoryAsync_ReturnsPaged()
     {
         for (var i = 0; i < 25; i++)
-            await _repository.AddAsync(CreateSnapshot("ltc-main", 1000 + i));
-        await _context.SaveChangesAsync();
+            await SeedSnapshot(CreateSnapshot("ltc-main", 1000 + i));
 
         var (items, totalCount) = await _repository.GetHistoryAsync("ltc-main", 1, 10);
 
@@ -76,23 +57,18 @@ public class BlockchainSnapshotRepositoryTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task ExistsAsync_ReturnsTrueForExisting()
+    public async Task GetLatestByChainAsync_ReturnsNullForNonExisting()
     {
-        var snapshot = CreateSnapshot("dash-main", 999);
-        await _repository.AddAsync(snapshot);
-        await _context.SaveChangesAsync();
+        var result = await _repository.GetLatestByChainAsync("nonexistent");
 
-        var exists = await _repository.ExistsAsync("dash-main", 999, snapshot.Hash);
-
-        Assert.True(exists);
+        Assert.Null(result);
     }
 
-    [Fact]
-    public async Task ExistsAsync_ReturnsFalseForNonExisting()
+    private async Task SeedSnapshot(BlockchainSnapshot snapshot)
     {
-        var exists = await _repository.ExistsAsync("nonexistent", 0, "nohash");
-
-        Assert.False(exists);
+        await using var context = _fixture.CreateContext();
+        context.Snapshots.Add(snapshot);
+        await context.SaveChangesAsync();
     }
 
     private static int _counter;
@@ -103,8 +79,6 @@ public class BlockchainSnapshotRepositoryTests : IAsyncLifetime
         Height = height,
         Hash = $"hash-{chain}-{height}-{++_counter}",
         Time = DateTimeOffset.UtcNow,
-        PeerCount = 250,
-        UnconfirmedCount = 1500,
         RawJson = "{}",
         FetchedAt = DateTimeOffset.UtcNow
     };

@@ -4,11 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlockchainTracker.Infrastructure.Persistence;
 
-public class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockchainSnapshotRepository
+public class BlockchainSnapshotRepository(IDbContextFactory<BlockchainDbContext> contextFactory) : IBlockchainSnapshotRepository
 {
     public async Task<BlockchainSnapshot?> GetLatestByChainAsync(string chainName, CancellationToken ct = default)
     {
+        await using var context = await contextFactory.CreateDbContextAsync(ct);
         return await context.Snapshots
+            .AsNoTracking()
             .Where(s => s.ChainName == chainName)
             .OrderByDescending(s => s.FetchedAt)
             .FirstOrDefaultAsync(ct);
@@ -16,7 +18,9 @@ public class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockc
 
     public async Task<List<BlockchainSnapshot>> GetLatestPerChainAsync(CancellationToken ct = default)
     {
+        await using var context = await contextFactory.CreateDbContextAsync(ct);
         return await context.Snapshots
+            .AsNoTracking()
             .GroupBy(s => s.ChainName)
             .Select(g => g.OrderByDescending(s => s.FetchedAt).First())
             .ToListAsync(ct);
@@ -25,7 +29,9 @@ public class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockc
     public async Task<(List<BlockchainSnapshot> Items, int TotalCount)> GetHistoryAsync(
         string chainName, int page, int pageSize, CancellationToken ct = default)
     {
+        await using var context = await contextFactory.CreateDbContextAsync(ct);
         var query = context.Snapshots
+            .AsNoTracking()
             .Where(s => s.ChainName == chainName)
             .OrderByDescending(s => s.FetchedAt);
 
@@ -36,16 +42,5 @@ public class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockc
             .ToListAsync(ct);
 
         return (items, totalCount);
-    }
-
-    public async Task AddAsync(BlockchainSnapshot snapshot, CancellationToken ct = default)
-    {
-        await context.Snapshots.AddAsync(snapshot, ct);
-    }
-
-    public async Task<bool> ExistsAsync(string chainName, long height, string hash, CancellationToken ct = default)
-    {
-        return await context.Snapshots
-            .AnyAsync(s => s.ChainName == chainName && s.Height == height && s.Hash == hash, ct);
     }
 }

@@ -17,7 +17,7 @@ builder.Services.Configure<CacheSettings>(builder.Configuration.GetSection(Cache
 builder.Services.Configure<HealthCheckSettings>(builder.Configuration.GetSection(HealthCheckSettings.SectionName));
 
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
+builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Singleton);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
