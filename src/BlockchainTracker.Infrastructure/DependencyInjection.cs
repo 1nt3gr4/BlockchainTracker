@@ -55,7 +55,7 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddSingleton<ICacheService, MemoryCacheService>();
 
-        services.AddSingleton<IBlockchainDataFetcherService, BlockchainDataFetcherService>();
+        services.AddScoped<IBlockchainDataFetcherService, BlockchainDataFetcherService>();
 
         return services;
     }

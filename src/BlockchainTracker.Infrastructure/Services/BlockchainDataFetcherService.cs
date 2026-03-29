@@ -4,14 +4,13 @@ using BlockchainTracker.Application.Interfaces;
 using BlockchainTracker.Domain.Entities;
 using BlockchainTracker.Domain.Interfaces;
 using BlockchainTracker.Infrastructure.Telemetry;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BlockchainTracker.Infrastructure.Services;
 
 public class BlockchainDataFetcherService(
     IBlockchainApiClient apiClient,
-    IServiceScopeFactory scopeFactory,
+    IUnitOfWork unitOfWork,
     ICacheService cache,
     BlockchainTrackerMetrics metrics,
     ILogger<BlockchainDataFetcherService> logger) : IBlockchainDataFetcherService
@@ -28,9 +27,6 @@ public class BlockchainDataFetcherService(
         {
             var response = await apiClient.GetChainDataAsync(chainName, ct);
             metrics.RecordSnapshotFetched(chainName);
-
-            await using var scope = scopeFactory.CreateAsyncScope();
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var exists = await unitOfWork.Repository.ExistsAsync(chainName, response.Height, response.Hash, ct);
             if (exists)

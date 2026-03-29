@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace BlockchainTracker.Api.Workers;
 
 public class BlockchainPollingWorker(
-    IMediator mediator,
+    IServiceScopeFactory scopeFactory,
     IOptionsMonitor<PollingSettings> pollingSettings,
     ILogger<BlockchainPollingWorker> logger) : BackgroundService
 {
@@ -18,6 +18,8 @@ public class BlockchainPollingWorker(
         {
             try
             {
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
                 await mediator.Send(new FetchAllChainsCommand(), stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

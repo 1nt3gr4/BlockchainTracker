@@ -2,6 +2,7 @@ using BlockchainTracker.Application.Interfaces;
 using BlockchainTracker.Domain.Configuration;
 using BlockchainTracker.Domain.Interfaces;
 using Mediator;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -11,7 +12,7 @@ public record FetchAllChainsCommand : ICommand;
 
 public sealed class FetchAllChainsCommandHandler(
     IBlockchainApiClient apiClient,
-    IBlockchainDataFetcherService fetcherService,
+    IServiceScopeFactory scopeFactory,
     IOptions<PollingSettings> pollingSettings,
     ILogger<FetchAllChainsCommandHandler> logger) : ICommandHandler<FetchAllChainsCommand>
 {
@@ -28,6 +29,9 @@ public sealed class FetchAllChainsCommandHandler(
         {
             try
             {
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var fetcherService = scope.ServiceProvider.GetRequiredService<IBlockchainDataFetcherService>();
+
                 var saved = await fetcherService.FetchAndSaveAsync(chainName, token);
                 if (saved)
                     logger.LogInformation("Saved new snapshot for chain {ChainName}", chainName);
