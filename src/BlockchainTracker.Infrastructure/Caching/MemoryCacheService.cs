@@ -4,7 +4,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace BlockchainTracker.Infrastructure.Caching;
 
-public class MemoryCacheService(IMemoryCache cache, BlockchainTrackerMetrics metrics) : ICacheService
+public sealed class MemoryCacheService(IMemoryCache cache, BlockchainTrackerMetrics metrics) : ICacheService
 {
     public Task<T?> GetAsync<T>(string key, CancellationToken ct)
     {

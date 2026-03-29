@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BlockchainTracker.Infrastructure.Clients;
 
-public class BlockCypherApiClient(
+public sealed class BlockCypherApiClient(
     IBlockCypherApi api,
     IConfiguration configuration,
     ILogger<BlockCypherApiClient> logger)

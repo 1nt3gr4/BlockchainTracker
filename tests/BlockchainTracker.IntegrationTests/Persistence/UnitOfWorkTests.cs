@@ -29,7 +29,7 @@ public class UnitOfWorkTests : IAsyncLifetime
             FetchedAt = DateTimeOffset.UtcNow
         };
 
-        await unitOfWork.Repository.AddAsync(snapshot, CancellationToken.None);
+        unitOfWork.Repository.Add(snapshot);
         await unitOfWork.SaveChangesAsync(CancellationToken.None);
 
         await using var verifyContext = _fixture.CreateContext();

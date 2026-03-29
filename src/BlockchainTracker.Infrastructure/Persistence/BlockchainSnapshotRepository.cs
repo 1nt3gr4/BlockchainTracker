@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlockchainTracker.Infrastructure.Persistence;
 
-public class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockchainSnapshotRepository
+public sealed class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockchainSnapshotRepository
 {
     public async Task<BlockchainSnapshot?> GetLatestByChainAsync(string chainName, CancellationToken ct)
     {
@@ -50,8 +50,8 @@ public class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockc
             .AnyAsync(s => s.ChainName == chainName && s.Height == height && s.Hash == hash, ct);
     }
 
-    public async Task AddAsync(BlockchainSnapshot snapshot, CancellationToken ct)
+    public void Add(BlockchainSnapshot snapshot)
     {
-        await context.Snapshots.AddAsync(snapshot, ct);
+        context.Snapshots.Add(snapshot);
     }
 }

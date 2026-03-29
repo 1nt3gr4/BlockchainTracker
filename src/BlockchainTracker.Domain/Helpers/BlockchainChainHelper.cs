@@ -11,7 +11,9 @@ public static class BlockchainChainHelper
         ["dash-main"] = ("dash", "main")
     };
 
-    public static IReadOnlyList<string> GetSupportedChains() => ChainMap.Keys.ToList();
+    private static readonly IReadOnlyList<string> SupportedChainsList = ChainMap.Keys.ToList().AsReadOnly();
+
+    public static IReadOnlyList<string> GetSupportedChains() => SupportedChainsList;
 
     public static (string Coin, string Chain) GetChainMapping(string chainName)
     {

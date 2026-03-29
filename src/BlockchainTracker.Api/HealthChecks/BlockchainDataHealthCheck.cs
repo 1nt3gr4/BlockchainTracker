@@ -14,21 +14,28 @@ public class BlockchainDataHealthCheck(
     IOptions<HealthCheckSettings> settings)
     : IHealthCheck
 {
+    private readonly Lock _lock = new();
     private HealthCheckResult? _cachedResult;
     private DateTimeOffset _lastCheck = DateTimeOffset.MinValue;
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(1);
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken ct)
     {
-        if (_cachedResult.HasValue && DateTimeOffset.UtcNow - _lastCheck < CacheDuration)
+        lock (_lock)
         {
-            return _cachedResult.Value;
+            if (_cachedResult.HasValue && DateTimeOffset.UtcNow - _lastCheck < CacheDuration)
+            {
+                return _cachedResult.Value;
+            }
         }
 
         var result = await EvaluateHealthAsync(ct);
 
-        _cachedResult = result;
-        _lastCheck = DateTimeOffset.UtcNow;
+        lock (_lock)
+        {
+            _cachedResult = result;
+            _lastCheck = DateTimeOffset.UtcNow;
+        }
 
         return result;
     }

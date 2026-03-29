@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BlockchainTracker.Infrastructure.Services;
 
-public class BlockchainDataFetcherService(
+public sealed class BlockchainDataFetcherService(
     IBlockchainApiClient apiClient,
     IUnitOfWork unitOfWork,
     ICacheService cache,
@@ -49,7 +49,7 @@ public class BlockchainDataFetcherService(
                 FetchedAt = DateTimeOffset.UtcNow
             };
 
-            await unitOfWork.Repository.AddAsync(snapshot, ct);
+            unitOfWork.Repository.Add(snapshot);
             await unitOfWork.SaveChangesAsync(ct);
             metrics.RecordSnapshotSaved(chainName);
 

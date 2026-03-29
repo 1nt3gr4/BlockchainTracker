@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlockchainTracker.Infrastructure.Persistence;
 
-public class BlockchainDbContext(DbContextOptions<BlockchainDbContext> options) : DbContext(options)
+public sealed class BlockchainDbContext(DbContextOptions<BlockchainDbContext> options) : DbContext(options)
 {
     public DbSet<BlockchainSnapshot> Snapshots => Set<BlockchainSnapshot>();
 

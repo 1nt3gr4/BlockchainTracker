@@ -2,7 +2,7 @@ using BlockchainTracker.Domain.Interfaces;
 
 namespace BlockchainTracker.Infrastructure.Persistence;
 
-public class UnitOfWork(BlockchainDbContext context, IBlockchainSnapshotRepository repository) : IUnitOfWork
+public sealed class UnitOfWork(BlockchainDbContext context, IBlockchainSnapshotRepository repository) : IUnitOfWork
 {
     public IBlockchainSnapshotRepository Repository => repository;
 

@@ -3,6 +3,8 @@ using BlockchainTracker.Api.HealthChecks;
 using BlockchainTracker.Api.Workers;
 using BlockchainTracker.Domain.Configuration;
 using BlockchainTracker.Infrastructure;
+using BlockchainTracker.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +30,13 @@ builder.Services.AddHealthChecks()
 builder.Services.AddHostedService<BlockchainPollingWorker>();
 
 var app = builder.Build();
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<BlockchainDbContext>>();
+    await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+    await dbContext.Database.MigrateAsync();
+}
 
 if (!app.Environment.IsProduction())
 {

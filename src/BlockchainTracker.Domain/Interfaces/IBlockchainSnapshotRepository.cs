@@ -8,5 +8,5 @@ public interface IBlockchainSnapshotRepository
     Task<List<BlockchainSnapshot>> GetLatestPerChainAsync(CancellationToken ct);
     Task<(List<BlockchainSnapshot> Items, int TotalCount)> GetHistoryAsync(string chainName, int page, int pageSize, CancellationToken ct);
     Task<bool> ExistsAsync(string chainName, long height, string hash, CancellationToken ct);
-    Task AddAsync(BlockchainSnapshot snapshot, CancellationToken ct);
+    void Add(BlockchainSnapshot snapshot);
 }
