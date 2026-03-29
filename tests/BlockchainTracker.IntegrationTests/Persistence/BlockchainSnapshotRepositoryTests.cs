@@ -102,10 +102,10 @@ public class BlockchainSnapshotRepositoryTests : IAsyncLifetime
         ChainName = chain,
         Height = height,
         Hash = $"hash-{chain}-{height}-{++_counter}",
-        Time = DateTime.UtcNow,
+        Time = DateTimeOffset.UtcNow,
         PeerCount = 250,
         UnconfirmedCount = 1500,
         RawJson = "{}",
-        FetchedAt = DateTime.UtcNow
+        FetchedAt = DateTimeOffset.UtcNow
     };
 }

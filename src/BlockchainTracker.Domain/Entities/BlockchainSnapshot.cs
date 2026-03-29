@@ -6,7 +6,7 @@ public class BlockchainSnapshot
     public required string ChainName { get; set; }
     public long Height { get; set; }
     public required string Hash { get; set; }
-    public DateTime Time { get; set; }
+    public DateTimeOffset Time { get; set; }
     public long PeerCount { get; set; }
     public long UnconfirmedCount { get; set; }
     public long? HighFeePerKb { get; set; }
@@ -17,5 +17,5 @@ public class BlockchainSnapshot
     public long? LowGasPrice { get; set; }
     public long LastForkHeight { get; set; }
     public required string RawJson { get; set; }
-    public DateTime FetchedAt { get; set; }
+    public DateTimeOffset FetchedAt { get; set; }
 }

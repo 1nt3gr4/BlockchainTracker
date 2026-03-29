@@ -14,23 +14,19 @@ public static class ChainEndpoints
 
         group.MapGet("/", GetAllChainsLatest)
             .WithName("GetAllChainsLatest")
-            .WithOpenApi()
             .Produces<IReadOnlyList<BlockchainSnapshotDto>>();
 
         group.MapGet("/tracked", GetTrackedChains)
             .WithName("GetTrackedChains")
-            .WithOpenApi()
             .Produces<IReadOnlyList<string>>();
 
         group.MapGet("/{chainName}/latest", GetChainLatest)
             .WithName("GetChainLatest")
-            .WithOpenApi()
             .Produces<BlockchainSnapshotDto>()
             .Produces(StatusCodes.Status404NotFound);
 
         group.MapGet("/{chainName}/history", GetChainHistory)
             .WithName("GetChainHistory")
-            .WithOpenApi()
             .Produces<PagedResult<BlockchainSnapshotDto>>()
             .ProducesValidationProblem();
 

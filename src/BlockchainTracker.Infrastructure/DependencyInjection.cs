@@ -1,3 +1,4 @@
+using System.Net;
 using BlockchainTracker.Application.Interfaces;
 using BlockchainTracker.Domain.Interfaces;
 using BlockchainTracker.Infrastructure.Caching;
@@ -28,8 +29,11 @@ public static class DependencyInjection
             return new BlockchainSnapshotRepository(context);
         });
 
+        var baseUrl = configuration["BlockCypher:BaseUrl"] ?? "https://api.blockcypher.com";
+
         services.AddRefitClient<IBlockCypherApi>()
-            .ConfigureHttpClient(c => c.BaseAddress = new Uri("https://api.blockcypher.com"))
+            .ConfigureHttpClient(c => c.BaseAddress = new Uri(baseUrl))
+            .AddPolicyHandler(GetRateLimitPolicy())
             .AddPolicyHandler(GetRetryPolicy())
             .AddPolicyHandler(GetCircuitBreakerPolicy());
 
@@ -41,6 +45,22 @@ public static class DependencyInjection
         services.AddSingleton<BlockchainTrackerMetrics>();
 
         return services;
+    }
+
+    private static IAsyncPolicy<HttpResponseMessage> GetRateLimitPolicy()
+    {
+        return Policy
+            .HandleResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.TooManyRequests)
+            .WaitAndRetryAsync(
+                retryCount: 5,
+                sleepDurationProvider: (retryAttempt, result, _) =>
+                {
+                    if (result.Result?.Headers.RetryAfter?.Delta is { } delta)
+                        return delta;
+
+                    return TimeSpan.FromSeconds(Math.Pow(2, retryAttempt));
+                },
+                onRetryAsync: (_, _, _, _) => Task.CompletedTask);
     }
 
     private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()

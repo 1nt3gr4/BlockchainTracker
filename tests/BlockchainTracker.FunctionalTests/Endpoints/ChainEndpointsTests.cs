@@ -105,11 +105,11 @@ public class ChainEndpointsTests : IAsyncLifetime, IClassFixture<CustomWebApplic
             ChainName = chain,
             Height = height,
             Hash = $"seed-{chain}-{height}-{++_seedCounter}",
-            Time = DateTime.UtcNow,
+            Time = DateTimeOffset.UtcNow,
             PeerCount = 100,
             UnconfirmedCount = 500,
             RawJson = "{}",
-            FetchedAt = DateTime.UtcNow
+            FetchedAt = DateTimeOffset.UtcNow
         });
         await context.SaveChangesAsync();
     }

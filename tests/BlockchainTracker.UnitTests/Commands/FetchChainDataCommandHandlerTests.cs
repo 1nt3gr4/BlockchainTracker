@@ -70,7 +70,7 @@ public class FetchChainDataCommandHandlerTests
         Name = "BTC.main",
         Height = 800000,
         Hash = "0000000000000000000abc123def456",
-        Time = DateTime.UtcNow,
+        Time = DateTimeOffset.UtcNow,
         PeerCount = 250,
         UnconfirmedCount = 1500,
         HighFeePerKb = 50000,

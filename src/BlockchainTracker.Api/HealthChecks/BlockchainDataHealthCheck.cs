@@ -5,27 +5,41 @@ using Microsoft.Extensions.Options;
 
 namespace BlockchainTracker.Api.HealthChecks;
 
-public class BlockchainDataHealthCheck : IHealthCheck
+/// <summary>
+/// Monitors that blockchain polling is functioning correctly by checking data freshness.
+/// Reports degraded status when polling has stopped or data becomes stale,
+/// helping container orchestrators (Kubernetes, Docker) detect service issues.
+/// Results are cached for 1 minute to minimize database load.
+/// </summary>
+public class BlockchainDataHealthCheck(
+    IServiceScopeFactory scopeFactory,
+    IOptions<HealthCheckSettings> settings) : IHealthCheck
 {
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly IOptions<HealthCheckSettings> _settings;
-
-    public BlockchainDataHealthCheck(IServiceScopeFactory scopeFactory, IOptions<HealthCheckSettings> settings)
-    {
-        _scopeFactory = scopeFactory;
-        _settings = settings;
-    }
+    private HealthCheckResult? _cachedResult;
+    private DateTimeOffset _lastCheck = DateTimeOffset.MinValue;
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(1);
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken ct = default)
     {
-        await using var scope = _scopeFactory.CreateAsyncScope();
+        if (_cachedResult.HasValue && DateTimeOffset.UtcNow - _lastCheck < CacheDuration)
+            return _cachedResult.Value;
+
+        var result = await EvaluateHealthAsync(ct);
+        _cachedResult = result;
+        _lastCheck = DateTimeOffset.UtcNow;
+        return result;
+    }
+
+    private async Task<HealthCheckResult> EvaluateHealthAsync(CancellationToken ct)
+    {
+        await using var scope = scopeFactory.CreateAsyncScope();
         var repository = scope.ServiceProvider.GetRequiredService<IBlockchainSnapshotRepository>();
         var snapshots = await repository.GetLatestPerChainAsync(ct);
 
         if (snapshots.Count == 0)
-            return HealthCheckResult.Degraded("No blockchain data available");
+            return HealthCheckResult.Healthy("No blockchain data yet \u2014 polling may not have completed its first cycle");
 
-        var staleThreshold = DateTime.UtcNow - _settings.Value.MaxStaleAge;
+        var staleThreshold = DateTimeOffset.UtcNow - settings.Value.MaxStaleAge;
         var staleChains = snapshots
             .Where(s => s.FetchedAt < staleThreshold)
             .Select(s => s.ChainName)

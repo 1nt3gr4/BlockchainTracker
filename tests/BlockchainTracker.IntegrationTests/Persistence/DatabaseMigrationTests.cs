@@ -40,9 +40,9 @@ public class DatabaseMigrationTests : IAsyncLifetime
             ChainName = "btc-main",
             Height = 900000,
             Hash = "unique-index-test-hash",
-            Time = DateTime.UtcNow,
+            Time = DateTimeOffset.UtcNow,
             RawJson = "{}",
-            FetchedAt = DateTime.UtcNow
+            FetchedAt = DateTimeOffset.UtcNow
         };
 
         var snapshot2 = new Domain.Entities.BlockchainSnapshot
@@ -50,9 +50,9 @@ public class DatabaseMigrationTests : IAsyncLifetime
             ChainName = "btc-main",
             Height = 900000,
             Hash = "unique-index-test-hash",
-            Time = DateTime.UtcNow,
+            Time = DateTimeOffset.UtcNow,
             RawJson = "{}",
-            FetchedAt = DateTime.UtcNow
+            FetchedAt = DateTimeOffset.UtcNow
         };
 
         context.Snapshots.Add(snapshot1);

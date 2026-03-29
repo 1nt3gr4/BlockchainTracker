@@ -22,9 +22,9 @@ public class UnitOfWorkTests : IAsyncLifetime
             ChainName = "btc-main",
             Height = 100,
             Hash = "uow-test-hash",
-            Time = DateTime.UtcNow,
+            Time = DateTimeOffset.UtcNow,
             RawJson = "{}",
-            FetchedAt = DateTime.UtcNow
+            FetchedAt = DateTimeOffset.UtcNow
         };
 
         await uow.SnapshotRepository.AddAsync(snapshot);

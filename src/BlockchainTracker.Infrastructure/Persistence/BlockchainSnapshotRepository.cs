@@ -4,18 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlockchainTracker.Infrastructure.Persistence;
 
-public class BlockchainSnapshotRepository : IBlockchainSnapshotRepository
+public class BlockchainSnapshotRepository(BlockchainDbContext context) : IBlockchainSnapshotRepository
 {
-    private readonly BlockchainDbContext _context;
-
-    public BlockchainSnapshotRepository(BlockchainDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<BlockchainSnapshot?> GetLatestByChainAsync(string chainName, CancellationToken ct = default)
     {
-        return await _context.Snapshots
+        return await context.Snapshots
             .Where(s => s.ChainName == chainName)
             .OrderByDescending(s => s.FetchedAt)
             .FirstOrDefaultAsync(ct);
@@ -23,7 +16,7 @@ public class BlockchainSnapshotRepository : IBlockchainSnapshotRepository
 
     public async Task<List<BlockchainSnapshot>> GetLatestPerChainAsync(CancellationToken ct = default)
     {
-        return await _context.Snapshots
+        return await context.Snapshots
             .GroupBy(s => s.ChainName)
             .Select(g => g.OrderByDescending(s => s.FetchedAt).First())
             .ToListAsync(ct);
@@ -32,7 +25,7 @@ public class BlockchainSnapshotRepository : IBlockchainSnapshotRepository
     public async Task<(List<BlockchainSnapshot> Items, int TotalCount)> GetHistoryAsync(
         string chainName, int page, int pageSize, CancellationToken ct = default)
     {
-        var query = _context.Snapshots
+        var query = context.Snapshots
             .Where(s => s.ChainName == chainName)
             .OrderByDescending(s => s.FetchedAt);
 
@@ -47,12 +40,12 @@ public class BlockchainSnapshotRepository : IBlockchainSnapshotRepository
 
     public async Task AddAsync(BlockchainSnapshot snapshot, CancellationToken ct = default)
     {
-        await _context.Snapshots.AddAsync(snapshot, ct);
+        await context.Snapshots.AddAsync(snapshot, ct);
     }
 
     public async Task<bool> ExistsAsync(string chainName, long height, string hash, CancellationToken ct = default)
     {
-        return await _context.Snapshots
+        return await context.Snapshots
             .AnyAsync(s => s.ChainName == chainName && s.Height == height && s.Hash == hash, ct);
     }
 }

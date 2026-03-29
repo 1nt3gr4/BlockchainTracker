@@ -3,15 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlockchainTracker.Infrastructure.Persistence;
 
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork(IDbContextFactory<BlockchainDbContext> contextFactory) : IUnitOfWork
 {
-    private readonly BlockchainDbContext _context;
+    private readonly BlockchainDbContext _context = contextFactory.CreateDbContext();
     private IBlockchainSnapshotRepository? _snapshotRepository;
-
-    public UnitOfWork(IDbContextFactory<BlockchainDbContext> contextFactory)
-    {
-        _context = contextFactory.CreateDbContext();
-    }
 
     public IBlockchainSnapshotRepository SnapshotRepository =>
         _snapshotRepository ??= new BlockchainSnapshotRepository(_context);

@@ -69,11 +69,11 @@ public class GetChainHistoryQueryHandlerTests
         ChainName = "btc-main",
         Height = height,
         Hash = $"hash-{height}",
-        Time = DateTime.UtcNow,
+        Time = DateTimeOffset.UtcNow,
         PeerCount = 250,
         UnconfirmedCount = 1500,
         LastForkHeight = height - 10,
         RawJson = "{}",
-        FetchedAt = DateTime.UtcNow
+        FetchedAt = DateTimeOffset.UtcNow
     };
 }

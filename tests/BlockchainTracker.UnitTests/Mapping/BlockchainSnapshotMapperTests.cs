@@ -14,7 +14,7 @@ public class BlockchainSnapshotMapperTests
             ChainName = "eth-main",
             Height = 18000000,
             Hash = "0xabc123",
-            Time = new DateTime(2024, 1, 15, 12, 0, 0, DateTimeKind.Utc),
+            Time = new DateTimeOffset(2024, 1, 15, 12, 0, 0, TimeSpan.Zero),
             PeerCount = 100,
             UnconfirmedCount = 500,
             HighGasPrice = 30000000000,
@@ -22,7 +22,7 @@ public class BlockchainSnapshotMapperTests
             LowGasPrice = 10000000000,
             LastForkHeight = 17999990,
             RawJson = "{}",
-            FetchedAt = new DateTime(2024, 1, 15, 12, 0, 30, DateTimeKind.Utc)
+            FetchedAt = new DateTimeOffset(2024, 1, 15, 12, 0, 30, TimeSpan.Zero)
         };
 
         var dto = BlockchainSnapshotMapper.MapToDto(snapshot);
@@ -48,12 +48,12 @@ public class BlockchainSnapshotMapperTests
             ChainName = "btc-main",
             Height = 800000,
             Hash = "000abc",
-            Time = DateTime.UtcNow,
+            Time = DateTimeOffset.UtcNow,
             HighFeePerKb = 50000,
             MediumFeePerKb = 25000,
             LowFeePerKb = 10000,
             RawJson = "{}",
-            FetchedAt = DateTime.UtcNow
+            FetchedAt = DateTimeOffset.UtcNow
         };
 
         var dto = BlockchainSnapshotMapper.MapToDto(snapshot);

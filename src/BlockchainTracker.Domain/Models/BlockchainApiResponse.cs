@@ -14,7 +14,7 @@ public class BlockchainApiResponse
     public string Hash { get; set; } = string.Empty;
 
     [JsonPropertyName("time")]
-    public DateTime Time { get; set; }
+    public DateTimeOffset Time { get; set; }
 
     [JsonPropertyName("peer_count")]
     public long PeerCount { get; set; }
