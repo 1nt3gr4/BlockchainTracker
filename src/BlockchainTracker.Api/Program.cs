@@ -17,6 +17,7 @@ builder.Host.UseSerilog((context, configuration) =>
 builder.Services.Configure<PollingSettings>(builder.Configuration.GetSection(PollingSettings.SectionName));
 builder.Services.Configure<CacheSettings>(builder.Configuration.GetSection(CacheSettings.SectionName));
 builder.Services.Configure<HealthCheckSettings>(builder.Configuration.GetSection(HealthCheckSettings.SectionName));
+builder.Services.Configure<DistributedLockSettings>(builder.Configuration.GetSection(DistributedLockSettings.SectionName));
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);

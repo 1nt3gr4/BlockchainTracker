@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using BlockchainTracker.Application.Interfaces;
+using BlockchainTracker.Domain.Configuration;
 using BlockchainTracker.Domain.Interfaces;
 using BlockchainTracker.Infrastructure.Caching;
 using BlockchainTracker.Infrastructure.Clients;
@@ -12,7 +13,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Extensions.Http;
+using RedLockNet;
+using RedLockNet.SERedis;
+using RedLockNet.SERedis.Configuration;
 using Refit;
+using StackExchange.Redis;
 
 namespace BlockchainTracker.Infrastructure;
 
@@ -49,8 +54,17 @@ public static class DependencyInjection
 
         services.AddSingleton<IBlockchainApiClient, BlockCypherApiClient>();
 
-        services.AddMemoryCache();
-        services.AddSingleton<ICacheService, MemoryCacheService>();
+        var redisSettings = configuration.GetSection(RedisSettings.SectionName).Get<RedisSettings>()
+            ?? new RedisSettings();
+
+        services.AddSingleton<IConnectionMultiplexer>(
+            _ => ConnectionMultiplexer.Connect(redisSettings.ConnectionString));
+
+        services.AddSingleton<IDistributedLockFactory>(sp =>
+            RedLockFactory.Create(
+                [new RedLockMultiplexer(sp.GetRequiredService<IConnectionMultiplexer>())]));
+
+        services.AddSingleton<ICacheService, RedisCacheService>();
 
         services.AddScoped<IBlockchainDataFetcherService, BlockchainDataFetcherService>();
 
