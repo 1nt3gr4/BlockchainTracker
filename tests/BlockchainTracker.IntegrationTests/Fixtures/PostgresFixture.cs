@@ -16,7 +16,7 @@ public class PostgresFixture : IAsyncLifetime
         await _container.StartAsync();
 
         await using var context = CreateContext();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.MigrateAsync();
     }
 
     public async ValueTask DisposeAsync()

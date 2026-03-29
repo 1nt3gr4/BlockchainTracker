@@ -30,7 +30,7 @@ public class DatabaseMigrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Database_UniqueIndex_PreventsduplicateInserts()
+    public async Task Database_UniqueIndex_PreventsDuplicateInserts()
     {
         await using var context = _fixture.CreateContext();
 
@@ -65,11 +65,11 @@ public class DatabaseMigrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Database_EnsureCreated_IsIdempotent()
+    public async Task Database_Migrate_IsIdempotent()
     {
         await using var context = _fixture.CreateContext();
 
-        var result = await context.Database.EnsureCreatedAsync();
-        Assert.False(result);
+        // Running Migrate again after fixture already migrated should succeed without error
+        await context.Database.MigrateAsync();
     }
 }

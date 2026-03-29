@@ -54,7 +54,7 @@ public class GetChainHistoryQueryHandlerTests
             Page = 1,
             PageSize = 20
         };
-        _cache.GetAsync<PagedResult<BlockchainSnapshotDto>>("chain:history:btc-main:1:20", Arg.Any<CancellationToken>())
+        _cache.GetAsync<PagedResult<BlockchainSnapshotDto>>("chain:history:btc-main:v0:1:20", Arg.Any<CancellationToken>())
             .Returns(cached);
 
         var result = await _handler.Handle(new GetChainHistoryQuery("btc-main", 1, 20), CancellationToken.None);

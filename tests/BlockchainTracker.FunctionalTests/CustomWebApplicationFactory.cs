@@ -42,12 +42,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.RemoveAll<IBlockchainApiClient>();
             services.AddSingleton(MockApiClient);
 
-            // Ensure DB is created
+            // Ensure DB schema is up to date via migrations
             using var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();
             var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<BlockchainDbContext>>();
             using var context = factory.CreateDbContext();
-            context.Database.EnsureCreated();
+            context.Database.Migrate();
         });
 
         builder.UseEnvironment("Testing");

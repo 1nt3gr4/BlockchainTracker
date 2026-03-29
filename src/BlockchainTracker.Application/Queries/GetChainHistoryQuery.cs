@@ -19,7 +19,8 @@ public sealed class GetChainHistoryQueryHandler(
 {
     public async ValueTask<PagedResult<BlockchainSnapshotDto>> Handle(GetChainHistoryQuery query, CancellationToken ct)
     {
-        var cacheKey = CacheKeys.ChainHistory(query.ChainName, query.Page, query.PageSize);
+        var version = await cache.GetAsync<long>(CacheKeys.ChainHistoryVersion(query.ChainName), ct);
+        var cacheKey = CacheKeys.ChainHistory(query.ChainName, query.Page, query.PageSize, version);
         var cached = await cache.GetAsync<PagedResult<BlockchainSnapshotDto>>(cacheKey, ct);
 
         if (cached is not null)

@@ -38,16 +38,14 @@ public static class DependencyInjection
             })
         };
 
-        IAsyncPolicy<HttpResponseMessage>? circuitBreakerPolicy = null;
+        services.AddSingleton(sp =>
+            GetCircuitBreakerPolicy(sp.GetRequiredService<BlockchainTrackerMetrics>()));
 
         services.AddRefitClient<IBlockCypherApi>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = new Uri(baseUrl))
             .AddPolicyHandler(GetRateLimitPolicy())
             .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler((sp, _) =>
-            {
-                return circuitBreakerPolicy ??= GetCircuitBreakerPolicy(sp.GetRequiredService<BlockchainTrackerMetrics>());
-            });
+            .AddPolicyHandler((sp, _) => sp.GetRequiredService<AsyncPolicy<HttpResponseMessage>>());
 
         services.AddSingleton<IBlockchainApiClient, BlockCypherApiClient>();
 
