@@ -4,6 +4,7 @@ using BlockchainTracker.Api.Workers;
 using BlockchainTracker.Domain.Configuration;
 using BlockchainTracker.Infrastructure;
 using BlockchainTracker.Infrastructure.Persistence;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -20,6 +21,7 @@ builder.Services.Configure<HealthCheckSettings>(builder.Configuration.GetSection
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

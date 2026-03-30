@@ -56,11 +56,6 @@ public sealed class BlockchainDataFetcherService(
             await cache.RemoveAsync(CacheKeys.ChainLatest(chainName), ct);
             await cache.RemoveAsync(CacheKeys.AllChainsLatest, ct);
 
-            // Invalidate history cache by incrementing the per-chain version
-            var versionKey = CacheKeys.ChainHistoryVersion(chainName);
-            var currentVersion = await cache.GetAsync<long>(versionKey, ct);
-            await cache.SetAsync(versionKey, currentVersion + 1, TimeSpan.FromDays(7), ct);
-
             logger.LogDebug("Saved new snapshot for {ChainName} at height {Height}", chainName, response.Height);
             return true;
         }
