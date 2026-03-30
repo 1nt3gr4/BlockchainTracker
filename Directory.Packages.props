@@ -27,9 +27,9 @@
     <!-- OpenAPI / Swagger -->
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.1.7" />
-    <!-- OpenTelemetry -->
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.1" />
-    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.15.1-beta.1" />
+    <!-- Validation -->
+    <PackageVersion Include="FluentValidation" Version="12.1.1" />
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <!-- Testing -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
