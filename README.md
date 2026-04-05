@@ -120,7 +120,7 @@ HTTP calls to BlockCypher are protected by three Polly policies (applied in orde
 
 ## Background Polling
 
-A `BackgroundService` polls all tracked chains every 30 seconds (configurable). Chains are fetched in parallel with `MaxDegreeOfParallelism: 3` by sending individual `FetchChainDataCommand` messages via Mediator. Duplicate snapshots (same chain + height + hash) are detected and skipped.
+A `BackgroundService` polls all tracked chains every 5 minutes (configurable via `Polling:Interval`). Chains are fetched in parallel with `MaxDegreeOfParallelism: 3` by sending individual `FetchChainDataCommand` messages via Mediator. Duplicate snapshots (same chain + height + hash) are detected and skipped.
 
 ---
 
@@ -133,11 +133,11 @@ All settings are configurable via `appsettings.json` or environment variables:
 | `ConnectionStrings:PostgreSql` | *(see appsettings)* | PostgreSQL connection string |
 | `BlockCypher:BaseUrl` | `https://api.blockcypher.com` | BlockCypher API base URL (**required**) |
 | `BlockCypher:Token` | *(empty)* | Optional API token for higher rate limits |
-| `Polling:Interval` | `00:00:30` | How often to poll all chains |
+| `Polling:Interval` | `00:05:00` | How often to poll all chains |
 | `Polling:MaxDegreeOfParallelism` | `3` | Max concurrent chain fetches |
 | `Cache:LatestSnapshotTtl` | `00:01:00` | Cache duration for latest snapshots |
 | `Cache:HistoryTtl` | `00:05:00` | Cache duration for history queries |
-| `HealthCheck:MaxStaleAge` | `00:05:00` | Data older than this marks health as degraded |
+| `HealthCheck:MaxStaleAge` | `00:10:00` | Data older than this marks health as degraded |
 
 ---
 

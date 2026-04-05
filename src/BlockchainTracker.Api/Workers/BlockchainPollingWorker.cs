@@ -71,6 +71,10 @@ public class BlockchainPollingWorker(
                     logger.LogDebug("No new data for chain {ChainName}", chainName);
                 }
             }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to fetch data for chain {ChainName}", chainName);
