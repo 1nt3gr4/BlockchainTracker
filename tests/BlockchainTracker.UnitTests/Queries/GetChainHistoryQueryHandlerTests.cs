@@ -1,4 +1,3 @@
-using BlockchainTracker.Application.Dtos;
 using BlockchainTracker.Application.Queries;
 using BlockchainTracker.Domain.Entities;
 using BlockchainTracker.Domain.Interfaces;

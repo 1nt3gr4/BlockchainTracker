@@ -2,11 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using BlockchainTracker.Application.Dtos;
 using BlockchainTracker.Domain.Entities;
-using BlockchainTracker.Domain.Models;
 using BlockchainTracker.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
 
 namespace BlockchainTracker.FunctionalTests.Endpoints;
 
@@ -88,6 +86,44 @@ public class ChainEndpointsTests : IAsyncLifetime, IClassFixture<CustomWebApplic
         Assert.NotNull(result);
         Assert.Equal(3, result.Items.Count);
         Assert.Equal(5, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task GetChainHistory_InvalidPage_ReturnsValidationProblem()
+    {
+        var response = await _client.GetAsync("/api/chains/btc-main/history?page=0&pageSize=10");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetChainHistory_PageSizeTooLarge_ReturnsValidationProblem()
+    {
+        var response = await _client.GetAsync("/api/chains/btc-main/history?page=1&pageSize=200");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetChainHistory_EmptyChainName_ReturnsNotFoundOrBadRequest()
+    {
+        var response = await _client.GetAsync("/api/chains//history?page=1&pageSize=10");
+
+        Assert.True(
+            response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.BadRequest,
+            $"Expected 404 or 400, got {response.StatusCode}");
+    }
+
+    [Fact]
+    public async Task GetChainHistory_NoData_ReturnsEmptyPage()
+    {
+        var response = await _client.GetAsync("/api/chains/nonexistent-chain/history?page=1&pageSize=10");
+
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<BlockchainSnapshotDto>>();
+        Assert.NotNull(result);
+        Assert.Empty(result.Items);
+        Assert.Equal(0, result.TotalCount);
     }
 
     private static int _seedCounter;

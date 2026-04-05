@@ -6,7 +6,7 @@ namespace BlockchainTracker.IntegrationTests.Fixtures;
 
 public class PostgresFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine")
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:18-alpine")
         .Build();
 
     public string ConnectionString => _container.GetConnectionString();
@@ -31,21 +31,5 @@ public class PostgresFixture : IAsyncLifetime
             .Options;
 
         return new BlockchainDbContext(options);
-    }
-
-    public IDbContextFactory<BlockchainDbContext> CreateDbContextFactory()
-    {
-        return new SimpleDbContextFactory(ConnectionString);
-    }
-
-    private sealed class SimpleDbContextFactory(string connectionString) : IDbContextFactory<BlockchainDbContext>
-    {
-        public BlockchainDbContext CreateDbContext()
-        {
-            var options = new DbContextOptionsBuilder<BlockchainDbContext>()
-                .UseNpgsql(connectionString)
-                .Options;
-            return new BlockchainDbContext(options);
-        }
     }
 }

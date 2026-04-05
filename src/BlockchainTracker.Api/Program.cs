@@ -1,10 +1,12 @@
-using BlockchainTracker.Api.Endpoints;
+using BlockchainTracker.Api.Behaviors;
+using BlockchainTracker.Api.Filters;
 using BlockchainTracker.Api.HealthChecks;
 using BlockchainTracker.Api.Workers;
 using BlockchainTracker.Domain.Configuration;
 using BlockchainTracker.Infrastructure;
 using BlockchainTracker.Infrastructure.Persistence;
 using FluentValidation;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -22,7 +24,9 @@ builder.Services.Configure<HealthCheckSettings>(builder.Configuration.GetSection
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
+builder.Services.AddControllers(options => options.Filters.Add<ValidationExceptionFilter>());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -48,7 +52,7 @@ if (!app.Environment.IsProduction())
 
 app.UseSerilogRequestLogging();
 
-app.MapChainEndpoints();
+app.MapControllers();
 app.MapHealthChecks("/health");
 
 app.Run();

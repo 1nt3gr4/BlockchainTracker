@@ -1,16 +1,79 @@
+using System.Diagnostics;
+using System.Text.Json;
 using BlockchainTracker.Application.Interfaces;
+using BlockchainTracker.Domain.Entities;
+using BlockchainTracker.Domain.Interfaces;
 using Mediator;
+using Microsoft.Extensions.Logging;
 
 namespace BlockchainTracker.Application.Commands;
 
 public sealed record FetchChainDataCommand(string ChainName) : ICommand<bool>;
 
 public sealed class FetchChainDataCommandHandler(
-    IBlockchainDataFetcherService fetcherService)
+    IBlockchainApiClient apiClient,
+    IUnitOfWork unitOfWork,
+    ICacheService cache,
+    IBlockchainTrackerMetrics metrics,
+    ILogger<FetchChainDataCommandHandler> logger)
     : ICommandHandler<FetchChainDataCommand, bool>
 {
+    private static readonly JsonSerializerOptions SnakeCaseOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+    };
+
     public async ValueTask<bool> Handle(FetchChainDataCommand command, CancellationToken ct)
     {
-        return await fetcherService.FetchAndSaveAsync(command.ChainName, ct);
+        var chainName = command.ChainName;
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var response = await apiClient.GetChainDataAsync(chainName, ct);
+            metrics.RecordSnapshotFetched(chainName);
+
+            var exists = await unitOfWork.Repository.ExistsAsync(chainName, response.Height, response.Hash, ct);
+
+            if (exists)
+            {
+                metrics.RecordDuplicateSkipped(chainName);
+                return false;
+            }
+
+            var snapshot = new BlockchainSnapshot
+            {
+                ChainName = chainName,
+                Height = response.Height,
+                Hash = response.Hash,
+                Time = response.Time,
+                RawJson = JsonSerializer.Serialize(response, SnakeCaseOptions),
+                FetchedAt = DateTimeOffset.UtcNow
+            };
+
+            unitOfWork.Repository.Add(snapshot);
+            await unitOfWork.SaveChangesAsync(ct);
+            metrics.RecordSnapshotSaved(chainName);
+
+            await cache.RemoveAsync(CacheKeys.ChainLatest(chainName), ct);
+            await cache.RemoveAsync(CacheKeys.AllChainsLatest, ct);
+
+            logger.LogDebug("Saved new snapshot for {ChainName} at height {Height}", chainName, response.Height);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            metrics.RecordFetchError(chainName);
+            throw;
+        }
+        finally
+        {
+            sw.Stop();
+            metrics.RecordFetchDuration(chainName, sw.Elapsed.TotalMilliseconds);
+        }
     }
 }
