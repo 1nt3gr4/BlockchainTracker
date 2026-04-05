@@ -5,7 +5,6 @@ using BlockchainTracker.Domain.Interfaces;
 using BlockchainTracker.Infrastructure.Caching;
 using BlockchainTracker.Infrastructure.Clients;
 using BlockchainTracker.Infrastructure.Persistence;
-using BlockchainTracker.Infrastructure.Services;
 using BlockchainTracker.Infrastructure.Telemetry;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IBlockchainSnapshotRepository, BlockchainSnapshotRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        services.AddSingleton<BlockchainTrackerMetrics>();
+        services.AddSingleton<IBlockchainTrackerMetrics, BlockchainTrackerMetrics>();
 
         var baseUrl = configuration["BlockCypher:BaseUrl"]
             ?? throw new InvalidOperationException("BlockCypher:BaseUrl configuration is required but was not found.");
@@ -38,8 +37,7 @@ public static class DependencyInjection
             })
         };
 
-        services.AddSingleton(sp =>
-            GetCircuitBreakerPolicy(sp.GetRequiredService<BlockchainTrackerMetrics>()));
+        services.AddSingleton(sp => GetCircuitBreakerPolicy(sp.GetRequiredService<IBlockchainTrackerMetrics>()));
 
         services.AddRefitClient<IBlockCypherApi>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = new Uri(baseUrl))
@@ -51,8 +49,6 @@ public static class DependencyInjection
 
         services.AddMemoryCache();
         services.AddSingleton<ICacheService, MemoryCacheService>();
-
-        services.AddScoped<IBlockchainDataFetcherService, BlockchainDataFetcherService>();
 
         return services;
     }
@@ -82,7 +78,7 @@ public static class DependencyInjection
             .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
     }
 
-    private static AsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy(BlockchainTrackerMetrics metrics)
+    private static AsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy(IBlockchainTrackerMetrics metrics)
     {
         return HttpPolicyExtensions
             .HandleTransientHttpError()

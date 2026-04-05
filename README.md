@@ -70,7 +70,7 @@ BlockchainTracker.sln
 │   ├── BlockchainTracker.Domain          # Entities, interfaces, value objects, configuration
 │   ├── BlockchainTracker.Application     # CQRS commands/queries, DTOs, mapping, interfaces
 │   ├── BlockchainTracker.Infrastructure  # EF Core, Refit API client, caching, Polly, telemetry
-│   └── BlockchainTracker.Api             # Minimal API endpoints, background worker, health checks
+│   └── BlockchainTracker.Api             # API controllers, background worker, health checks
 └── tests/
     ├── BlockchainTracker.UnitTests           # Fast, no external dependencies
     ├── BlockchainTracker.IntegrationTests    # PostgreSQL via Testcontainers
@@ -85,6 +85,7 @@ Clean Architecture with four layers. Dependencies flow inward — Domain has zer
 - **CQRS** via [Mediator](https://github.com/martinothamar/Mediator) (source-generated, zero-reflection)
 - **Repository + Unit of Work** for data access
 - **Object mapping** via [Mapperly](https://github.com/riok/mapperly) (source-generated)
+- **Pipeline behaviors** for cross-cutting concerns (FluentValidation)
 
 ---
 
@@ -93,8 +94,8 @@ Clean Architecture with four layers. Dependencies flow inward — Domain has zer
 | Category | Technology |
 |----------|-----------|
 | Runtime | .NET 10 |
-| Web framework | ASP.NET Core Minimal APIs |
-| Database | PostgreSQL 16, EF Core 10, Npgsql |
+| Web framework | ASP.NET Core MVC (Controllers) |
+| Database | PostgreSQL 18, EF Core 10, Npgsql |
 | HTTP client | Refit (source-generated) |
 | Resilience | Polly (retry with exponential backoff + jitter, rate-limit handling, circuit breaker) |
 | Caching | In-memory (`IMemoryCache`) with TTL-based invalidation |
@@ -119,7 +120,7 @@ HTTP calls to BlockCypher are protected by three Polly policies (applied in orde
 
 ## Background Polling
 
-A `BackgroundService` polls all tracked chains every 30 seconds (configurable). Chains are fetched in parallel with `MaxDegreeOfParallelism: 3`. Duplicate snapshots (same chain + height + hash) are detected and skipped.
+A `BackgroundService` polls all tracked chains every 5 minutes (configurable via `Polling:Interval`). Chains are fetched in parallel with `MaxDegreeOfParallelism: 3` by sending individual `FetchChainDataCommand` messages via Mediator. Duplicate snapshots (same chain + height + hash) are detected and skipped.
 
 ---
 
@@ -132,17 +133,17 @@ All settings are configurable via `appsettings.json` or environment variables:
 | `ConnectionStrings:PostgreSql` | *(see appsettings)* | PostgreSQL connection string |
 | `BlockCypher:BaseUrl` | `https://api.blockcypher.com` | BlockCypher API base URL (**required**) |
 | `BlockCypher:Token` | *(empty)* | Optional API token for higher rate limits |
-| `Polling:Interval` | `00:00:30` | How often to poll all chains |
+| `Polling:Interval` | `00:05:00` | How often to poll all chains |
 | `Polling:MaxDegreeOfParallelism` | `3` | Max concurrent chain fetches |
 | `Cache:LatestSnapshotTtl` | `00:01:00` | Cache duration for latest snapshots |
 | `Cache:HistoryTtl` | `00:05:00` | Cache duration for history queries |
-| `HealthCheck:MaxStaleAge` | `00:05:00` | Data older than this marks health as degraded |
+| `HealthCheck:MaxStaleAge` | `00:10:00` | Data older than this marks health as degraded |
 
 ---
 
 ## Database
 
-- **PostgreSQL 16** with EF Core 10
+- **PostgreSQL 18** with EF Core 10
 - Migrations run automatically on application startup (uses PostgreSQL advisory locks — safe for multi-instance deployments)
 - Single table: `blockchain_snapshots` with JSONB column for raw API responses
 - Unique index on `(chain_name, height, hash)` prevents duplicate snapshots
@@ -170,6 +171,6 @@ dotnet test
 
 | Suite | What it covers |
 |-------|---------------|
-| **Unit** | Command/query handlers, API client mapping, DTO mapping, chain helper |
+| **Unit** | Command/query handlers, API client mapping, DTO mapping, chain helper, fetch metrics |
 | **Integration** | Repository CRUD, Unit of Work persistence, schema creation, unique index enforcement, pagination, ordering |
-| **Functional** | Full HTTP endpoint responses, status codes, health check, Swagger spec |
+| **Functional** | Full HTTP endpoint responses, status codes, validation pipeline, health check, Swagger spec |

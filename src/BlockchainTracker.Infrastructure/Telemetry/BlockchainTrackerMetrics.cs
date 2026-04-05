@@ -1,8 +1,9 @@
 using System.Diagnostics.Metrics;
+using BlockchainTracker.Application.Interfaces;
 
 namespace BlockchainTracker.Infrastructure.Telemetry;
 
-public sealed class BlockchainTrackerMetrics
+public sealed class BlockchainTrackerMetrics : IBlockchainTrackerMetrics
 {
     private const string MeterName = "BlockchainTracker";
 
