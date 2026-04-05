@@ -1,5 +1,4 @@
 using BlockchainTracker.Domain.Interfaces;
-using BlockchainTracker.Domain.Models;
 using BlockchainTracker.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -13,7 +12,7 @@ namespace BlockchainTracker.FunctionalTests;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine")
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:18-alpine")
         .Build();
 
     public IBlockchainApiClient MockApiClient { get; } = Substitute.For<IBlockchainApiClient>();

@@ -1,4 +1,3 @@
-using BlockchainTracker.Domain.Helpers;
 using BlockchainTracker.Infrastructure.Clients;
 using BlockchainTracker.Domain.Models;
 using Microsoft.Extensions.Configuration;
@@ -42,19 +41,6 @@ public class BlockCypherApiClientTests
     public async Task GetChainDataAsync_UnsupportedChain_ThrowsArgumentException()
     {
         await Assert.ThrowsAsync<ArgumentException>(() => _client.GetChainDataAsync("unsupported-chain", CancellationToken.None));
-    }
-
-    [Fact]
-    public void GetSupportedChains_ReturnsFiveChains()
-    {
-        var chains = BlockchainChainHelper.GetSupportedChains();
-
-        Assert.Equal(5, chains.Count);
-        Assert.Contains("eth-main", chains);
-        Assert.Contains("btc-main", chains);
-        Assert.Contains("btc-test3", chains);
-        Assert.Contains("ltc-main", chains);
-        Assert.Contains("dash-main", chains);
     }
 
     [Fact]

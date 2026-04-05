@@ -1,4 +1,3 @@
-using BlockchainTracker.Infrastructure.Persistence;
 using BlockchainTracker.IntegrationTests.Fixtures;
 using Microsoft.EntityFrameworkCore;
 
