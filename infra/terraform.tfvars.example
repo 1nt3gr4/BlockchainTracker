@@ -1,0 +1,11 @@
+# AWS region (us-east-1 has broadest free tier coverage)
+aws_region = "us-east-1"
+
+# Environment tag
+environment = "production"
+
+# BlockCypher API token (required — get from https://www.blockcypher.com/)
+blockcypher_token = "YOUR_BLOCKCYPHER_TOKEN_HERE"
+
+# Docker image tag to deploy (update after pushing to ECR)
+container_image_tag = "latest"
